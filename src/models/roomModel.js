@@ -1,4 +1,4 @@
-// 📁 src/models/roomModel.js
+// src/models/roomModel.js
 
 /**
  * [메모리 기반 방 정보 저장소]

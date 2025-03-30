@@ -3,8 +3,8 @@
 // Express 라우터 사용을 위한 import
 import express from "express";
 
-// 문제 조회 컨트롤러 import (⚠️ 파일명: questioncontroller.js)
-import { getQuestionsByRoom } from "../controllers/questioncontroller.js";
+// 문제 조회 컨트롤러 import (파일명: questioncontroller.js)
+import { getQuestionsByRoom } from "../controllers/questionController.js";
 
 // 라우터 객체 생성
 const router = express.Router();

@@ -1,6 +1,5 @@
 // src/controllers/questionController.js
 
-// DB 연결 객체 import
 import db from "../confing/db.js";
 
 /**
@@ -9,9 +8,9 @@ import db from "../confing/db.js";
  * → 프론트에서 퀴즈 시작 시 사용
  */
 export function getQuestionsByRoom(req, res) {
-  const roomCode = req.params.code; // URL에서 받은 roomCode (예: /room/6QR4L2/questions)
+  const roomCode = req.params.code;
 
-  // 1️. 해당 방(room_code)의 room_id를 조회
+  // 1️⃣ room_code로 해당 방의 room_id 조회
   const getRoomIdQuery = `
     SELECT room_id FROM rooms WHERE room_code = ?
   `;
@@ -24,7 +23,7 @@ export function getQuestionsByRoom(req, res) {
 
     const roomId = roomResults[0].room_id;
 
-    // 2️. 해당 room_id의 문제 목록 조회
+    // 2️⃣ 해당 room_id의 문제 목록 조회
     const getQuestionsQuery = `
       SELECT question_text, options FROM questions WHERE room_id = ?
     `;
@@ -35,13 +34,26 @@ export function getQuestionsByRoom(req, res) {
         return res.status(500).json({ error: "문제 불러오기 실패" });
       }
 
-      // 3️. 결과를 클라이언트가 쓰기 쉬운 형태로 가공
-      const questions = results.map((q) => ({
-        text: q.question_text,
-        options: JSON.parse(q.options), // 문자열로 저장된 JSON 배열을 객체로 변환
-      }));
+      // 3️⃣ 보기 배열을 안전하게 파싱해서 반환
+      const questions = results.map((q) => {
+        let parsedOptions = [];
 
-      res.status(200).json({ questions }); // 결과 전송
+        try {
+          parsedOptions = typeof q.options === "string"
+            ? JSON.parse(q.options)
+            : q.options;
+        } catch (e) {
+          console.error("❌ 보기 파싱 오류:", q.options);
+          parsedOptions = [];
+        }
+
+        return {
+          text: q.question_text,
+          options: parsedOptions
+        };
+      });
+
+      res.status(200).json({ questions });
     });
   });
 }
