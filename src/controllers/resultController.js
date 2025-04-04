@@ -1,7 +1,7 @@
 // src/controllers/resultController.js
 
 // DB 연결 객체 import
-import db from "../confing/db.js";
+import db from "../config/db.js";
 
 /**
  * [자동 채점 + 결과 저장 API]

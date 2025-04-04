@@ -1,7 +1,7 @@
 // src/controllers/roomController.js
 
 // DB 연결 객체 불러오기
-import db from "../confing/db.js";
+import db from "../config/db.js";
 
 // 방 코드 생성에 사용할 nanoid 라이브러리
 import { nanoid } from "nanoid";

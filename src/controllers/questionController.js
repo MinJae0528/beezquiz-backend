@@ -1,6 +1,6 @@
 // src/controllers/questionController.js
 
-import db from "../confing/db.js";
+import db from "../config/db.js";
 
 /**
  * [문제 목록 조회 함수]
