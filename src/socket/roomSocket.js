@@ -5,11 +5,13 @@ export default function handleRoomSocket(io, socket) {
   socket.on("join-room", (roomCode) => {
     socket.join(roomCode);
 
+    // 인원 수 관리
     if (!roomMembers[roomCode]) {
       roomMembers[roomCode] = new Set();
     }
     roomMembers[roomCode].add(socket.id);
 
+    // 인원 수 브로드캐스트
     const count = roomMembers[roomCode].size;
     io.to(roomCode).emit("room-member-count", count);
   });
@@ -20,7 +22,7 @@ export default function handleRoomSocket(io, socket) {
     io.to(roomCode).emit("start-quiz");  // 모든 참가자에게 시작 신호
   });
 
-  // 퀴즈 종료 (선택)
+  // 퀴즈 종료
   socket.on("quiz-finished", (roomCode) => {
     console.log(`🔴 ${roomCode} 방 퀴즈 종료됨`);
     io.to(roomCode).emit("quiz-finished");  // 모든 참가자에게 종료 신호
