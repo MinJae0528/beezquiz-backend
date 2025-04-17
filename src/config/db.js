@@ -14,6 +14,9 @@ const db = mysql.createConnection({
   user: process.env.DB_USER || "root",            // DB 사용자 이름
   password: process.env.DB_PASS || "1234",        // DB 비밀번호
   database: process.env.DB_NAME || "beezquiz_db", // 사용할 DB 이름
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
 });
 
 // DB 연결 시도
