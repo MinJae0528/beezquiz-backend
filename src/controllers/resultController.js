@@ -1,83 +1,64 @@
 // src/controllers/resultController.js
-
-// DB 연결 객체 import
 import db from "../config/db.js";
 
 /**
- * [자동 채점 + 결과 저장 API]
- * 사용자가 제출한 답안을 받아 정답과 비교해 점수를 계산하고,
- * DB에 결과(nickname, score, 시간)를 저장하는 함수입니다.
+ * POST /results
+ * body: { room_id, nickname, answers: [String] }
  */
-export function saveResult(req, res) {
-  const { room_id, nickname, answers } = req.body; // 요청에서 데이터 추출
+export const saveResult = async (req, res) => {
+  const { room_id, nickname, answers } = req.body;
+  if (!room_id || !nickname || !Array.isArray(answers)) {
+    return res.status(400).json({ error: "room_id, nickname, answers 모두 필요합니다." });
+  }
 
-  // 1️. 해당 room_id의 문제들의 정답 목록 조회
-  const getAnswersQuery = `
-    SELECT correct_answer 
-    FROM questions 
-    WHERE room_id = ?
-    ORDER BY question_id ASC
-  `;
+  try {
+    // 1) 정답 불러오기
+    const getAnswersQuery = `
+      SELECT correct_answer
+      FROM questions
+      WHERE room_id = ?
+      ORDER BY question_id ASC
+    `;
+    const [rows] = await db.query(getAnswersQuery, [room_id]);
+    const correctAnswers = rows.map(r => r.correct_answer.trim());
 
-  db.query(getAnswersQuery, [room_id], (err, results) => {
-    if (err) {
-      console.error("❌ 정답 불러오기 오류:", err);
-      return res.status(500).json({ error: "정답 조회 실패" });
-    }
-
-    // 2️. 정답 리스트만 추출
-    const correctAnswers = results.map((row) => row.correct_answer);
-
-    // 3️. 사용자 답안과 정답 비교 → 점수 계산
+    // 2) 채점
     let score = 0;
-    for (let i = 0; i < correctAnswers.length; i++) {
-      const userAnswer = answers[i]?.trim?.();        // 사용자의 i번째 답안 (공백 제거)
-      const correct = correctAnswers[i]?.trim?.();    // 정답 (공백 제거)
+    correctAnswers.forEach((ans, i) => {
+      if (answers[i]?.trim() === ans) score++;
+    });
 
-      if (userAnswer === correct) {
-        score++; // 정답이면 점수 1점 추가
-      }
-    }
-
-    // 4️. 계산된 점수와 닉네임을 results 테이블에 저장
+    // 3) 결과 저장
     const insertResultQuery = `
       INSERT INTO results (room_id, nickname, score, completed_at)
       VALUES (?, ?, ?, NOW())
     `;
+    await db.query(insertResultQuery, [room_id, nickname, score]);
 
-    db.query(insertResultQuery, [room_id, nickname, score], (err2) => {
-      if (err2) {
-        console.error("❌ 결과 저장 실패:", err2);
-        return res.status(500).json({ error: "결과 저장 실패" });
-      }
-
-      // 5️. 성공 응답: 점수 포함해서 클라이언트에 전송
-      res.status(200).json({ success: true, score });
-    });
-  });
-}
+    return res.status(200).json({ success: true, score });
+  } catch (err) {
+    console.error("❌ saveResult 에러:", err);
+    return res.status(500).json({ error: "결과 저장 중 오류가 발생했습니다." });
+  }
+};
 
 /**
- * [결과 목록 조회 API]
- * 특정 방(room_id)의 참가자 닉네임, 점수, 제출 시간 정보를 조회합니다.
- * 선생님 화면에서 통계/결과 확인용으로 사용됩니다.
+ * GET /results/room/:room_id
  */
-export function getResultsByRoom(req, res) {
-  const room_id = req.params.room_id;
+export const getResultsByRoom = async (req, res) => {
+  const { room_id } = req.params;
 
-  const query = `
-    SELECT nickname, score, completed_at 
-    FROM results 
-    WHERE room_id = ?
-  `;
-
-  db.query(query, [room_id], (err, results) => {
-    if (err) {
-      console.error("❌ 결과 조회 실패:", err);
-      return res.status(500).json({ error: "결과 조회 실패" });
-    }
-
-    // 결과 배열을 그대로 클라이언트에 응답
-    res.status(200).json(results);
-  });
-}
+  try {
+    const query = `
+      SELECT nickname, score, completed_at
+      FROM results
+      WHERE room_id = ?
+      ORDER BY completed_at DESC
+    `;
+    const [rows] = await db.query(query, [room_id]);
+    return res.status(200).json(rows);
+  } catch (err) {
+    console.error("❌ getResultsByRoom 에러:", err);
+    return res.status(500).json({ error: "결과 조회 중 오류가 발생했습니다." });
+  }
+};

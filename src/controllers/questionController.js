@@ -1,59 +1,77 @@
 // src/controllers/questionController.js
-
-import db from "../config/db.js";
+import pool from "../config/db.js";
 
 /**
- * [문제 목록 조회 함수]
- * 특정 방 코드(roomCode)에 해당하는 문제 목록을 조회하는 API
- * → 프론트에서 퀴즈 시작 시 사용
+ * POST /room/:code/questions
+ * body: { questions: [ { question, answer } ] }
  */
-export function getQuestionsByRoom(req, res) {
-  const roomCode = req.params.code;
+export const saveQuestions = async (req, res) => {
+  const { code } = req.params;
+  const { questions } = req.body;
 
-  // 1️⃣ room_code로 해당 방의 room_id 조회
-  const getRoomIdQuery = `
-    SELECT room_id FROM rooms WHERE room_code = ?
-  `;
+  if (!Array.isArray(questions) || questions.length === 0) {
+    return res.status(400).json({ message: "questions 배열이 필요합니다." });
+  }
 
-  db.query(getRoomIdQuery, [roomCode], (err, roomResults) => {
-    if (err || roomResults.length === 0) {
-      console.error("❌ 방 조회 실패 또는 존재하지 않음:", err);
-      return res.status(404).json({ error: "존재하지 않는 방입니다." });
+  try {
+    // 1) room_code → room_id 조회
+    const [[room]] = await pool.query(
+      `SELECT room_id FROM rooms WHERE room_code = ?`,
+      [code]
+    );
+    if (!room) return res.status(404).json({ message: "존재하지 않는 방 코드입니다." });
+    const roomId = room.room_id;
+
+    // 2) questions 삽입
+    const insertSQL = `
+      INSERT INTO questions
+        (room_id, question_text, options, correct_answer)
+      VALUES (?, ?, ?, ?)
+    `;
+    for (const { question, answer } of questions) {
+      await pool.query(
+        insertSQL,
+        [roomId, question, JSON.stringify([]), answer]
+      );
     }
 
-    const roomId = roomResults[0].room_id;
+    return res.status(201).json({ message: "문제 저장 완료" });
+  } catch (err) {
+    console.error("❌ 문제 저장 에러:", err);
+    return res.status(500).json({ message: "문제 저장 실패" });
+  }
+};
 
-    // 2️⃣ 해당 room_id의 문제 목록 조회
-    const getQuestionsQuery = `
-      SELECT question_text, options FROM questions WHERE room_id = ?
-    `;
+/**
+ * GET /room/:code/questions
+ */
+export const getQuestionsByRoom = async (req, res) => {
+  const { code } = req.params;
 
-    db.query(getQuestionsQuery, [roomId], (err2, results) => {
-      if (err2) {
-        console.error("❌ 문제 조회 실패:", err2);
-        return res.status(500).json({ error: "문제 불러오기 실패" });
-      }
+  try {
+    // room_id 가져오기
+    const [[room]] = await pool.query(
+      `SELECT room_id FROM rooms WHERE room_code = ?`,
+      [code]
+    );
+    if (!room) return res.status(404).json({ message: "존재하지 않는 방 코드입니다." });
+    const roomId = room.room_id;
 
-      // 3️⃣ 보기 배열을 안전하게 파싱해서 반환
-      const questions = results.map((q) => {
-        let parsedOptions = [];
+    // questions 조회
+    const [rows] = await pool.query(
+      `SELECT question_id,
+              question_text   AS question,
+              options,
+              correct_answer  AS answer
+       FROM questions
+       WHERE room_id = ?
+       ORDER BY question_id ASC`,
+      [roomId]
+    );
 
-        try {
-          parsedOptions = typeof q.options === "string"
-            ? JSON.parse(q.options)
-            : q.options;
-        } catch (e) {
-          console.error("❌ 보기 파싱 오류:", q.options);
-          parsedOptions = [];
-        }
-
-        return {
-          text: q.question_text,
-          options: parsedOptions
-        };
-      });
-
-      res.status(200).json({ questions });
-    });
-  });
-}
+    return res.status(200).json(rows);
+  } catch (err) {
+    console.error("❌ 문제 조회 에러:", err);
+    return res.status(500).json({ message: "문제 조회 실패" });
+  }
+};
