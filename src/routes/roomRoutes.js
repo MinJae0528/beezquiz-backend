@@ -10,8 +10,8 @@ const router = express.Router();
 const participantCounts = {};            // { roomCode: 현재 참가자 수 }
 const nicknamesInRoom = new Map();       // { roomCode: Set(nicknames) }
 const roomTimestamps = new Map();        // { roomCode: 생성된 시간(timestamp) }
-
-const ROOM_EXPIRE_TIME = 10 * 1000;  // 방 만료 시간 설정 (10초)
+const ROOM_EXPIRE_TIME = 10 * 60 * 1000; // 10분 (단위: ms)
+// const ROOM_EXPIRE_TIME = 10 * 1000;  // 방 만료 시간 설정 (10초)
 
 /**
  * [POST] /room/create
