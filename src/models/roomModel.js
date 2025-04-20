@@ -7,7 +7,7 @@
  * 주로 테스트, 임시 저장, 또는 실시간 WebSocket용으로 활용 가능.
  */
 
-// ▶️ rooms: Map 형태로 방 정보 저장
+// rooms: Map 형태로 방 정보 저장
 // key: roomCode (랜덤 코드), value: 방 정보 객체
 const rooms = new Map();
 

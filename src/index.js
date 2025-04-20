@@ -1,37 +1,37 @@
 // src/index.js
 
-// 필수 모듈 import
+// 서버 및 소켓 설정에 필요한 모듈 import
 import http from "http";
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
 import initializeSocket from "./socket/index.js";
-import express from "express";       // 서버 생성용
-import cors from "cors";             // CORS 허용 (프론트와 통신 위해 필요)
-import dotenv from "dotenv";         // 환경변수(.env) 사용
 
-// 라우터 import
-import roomRoutes from "./routes/roomRoutes.js";         // 방 생성 / 방 확인
-import questionRoutes from "./routes/questionRoutes.js"; // 문제 조회
-import resultRoutes from "./routes/resultRoutes.js";     // 결과 저장 / 조회
+// 라우터 import (기능별 분리)
+import roomRoutes from "./routes/roomRoutes.js";         // 방 생성 및 참가 관련
+import questionRoutes from "./routes/questionRoutes.js"; // 문제 저장 및 조회
+import resultRoutes from "./routes/resultRoutes.js";     // 결과 저장 및 조회
 
-// 환경변수 설정 로드
+// .env 파일에서 환경변수 로드
 dotenv.config();
 
-// Express 앱 생성
+// Express 앱과 HTTP 서버 인스턴스 생성
 const app = express();
 const server = http.createServer(app);
 
-// 기본 미들웨어 설정
-app.use(cors());                    // 모든 도메인 요청 허용 (CORS)
-app.use(express.json());           // JSON 형식 요청 파싱
+// 공통 미들웨어 등록
+app.use(cors());            // 모든 도메인에서 요청 허용 (CORS 문제 해결용)
+app.use(express.json());    // JSON 형식의 요청 본문을 파싱
 
-// 라우터 설정
-app.use("/room", roomRoutes);      // /room/create, /room/:code 등
-app.use("/room", questionRoutes);  // /room/:code/questions
-app.use("/results", resultRoutes); // /results, /results/room/:room_id
+// API 라우팅
+app.use("/room", roomRoutes);      // 방 생성 및 참가 관련 엔드포인트
+app.use("/room", questionRoutes);  // 문제 저장 및 조회 (방 코드 포함)
+app.use("/results", resultRoutes); // 결과 저장 및 조회
 
-// 소켓 연결
-initializeSocket(server);
+// WebSocket 초기화
+initializeSocket(server);  // 소켓 기능을 서버에 연결
 
-// 서버 실행
+// 서버 실행 (포트 3001)
 app.listen(3001, () => {
-  console.log("🚀 서버 실행 중"); // 콘솔에 서버 시작 메시지 출력
+  console.log("🚀서버가 3001번 포트에서 실행 중");
 });
