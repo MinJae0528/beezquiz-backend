@@ -1,3 +1,4 @@
+// ✅ 완전히 정리된 questionRoutes.js
 import express from "express";
 import {
   saveQuestions,
@@ -6,10 +7,7 @@ import {
 
 const router = express.Router();
 
-// 문제 저장
-router.post("/:code/questions", saveQuestions);
-
-// 문제 조회
-router.get("/:code/questions", getQuestionsByRoom);
+router.post("/:roomCode/questions", saveQuestions);
+router.get("/:roomCode/questions", getQuestionsByRoom);
 
 export default router;

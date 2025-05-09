@@ -1,39 +1,47 @@
-const roomMembers = {};  // { roomCode: Set(socket.id) }
+const studentMembers = {}; // { roomCode: Set<socket.id> }
 
 export default function handleRoomSocket(io, socket) {
-  // 방 참가
-  socket.on("join-room", (roomCode) => {
+  socket.on("join-room", (payload) => {
+    const { roomCode, role } =
+      typeof payload === "string"
+        ? { roomCode: payload, role: "student" }
+        : payload;
+
     socket.join(roomCode);
 
-    // 인원 수 관리
-    if (!roomMembers[roomCode]) {
-      roomMembers[roomCode] = new Set();
+    // ✅ 학생만 참가자로 카운트
+    if (role === "student") {
+      studentMembers[roomCode] = studentMembers[roomCode] || new Set();
+      studentMembers[roomCode].add(socket.id);
     }
-    roomMembers[roomCode].add(socket.id);
 
-    // 인원 수 브로드캐스트
-    const count = roomMembers[roomCode].size;
-    io.to(roomCode).emit("room-member-count", count);
+    // ✅ 참가자 수 갱신 (학생만 포함)
+    io.to(roomCode).emit(
+      "room-member-count",
+      studentMembers[roomCode]?.size || 0
+    );
   });
 
-  // 선생님이 퀴즈 시작
   socket.on("start-quiz", (roomCode) => {
-    console.log(`🟢 ${roomCode} 방 퀴즈 시작됨`);
-    io.to(roomCode).emit("start-quiz");  // 모든 참가자에게 시작 신호
+    io.to(roomCode).emit("start-quiz");
   });
 
-  // 퀴즈 종료
+  socket.on("next-question", ({ roomCode, nextIndex }) => {
+    io.to(roomCode).emit("next-question", nextIndex);
+  });
+
   socket.on("quiz-finished", (roomCode) => {
-    console.log(`🔴 ${roomCode} 방 퀴즈 종료됨`);
-    io.to(roomCode).emit("quiz-finished");  // 모든 참가자에게 종료 신호
+    io.to(roomCode).emit("quiz-finished");
   });
 
-  // 연결 종료
   socket.on("disconnect", () => {
-    for (const roomCode in roomMembers) {
-      roomMembers[roomCode].delete(socket.id);
-      const count = roomMembers[roomCode].size;
-      io.to(roomCode).emit("room-member-count", count);
+    for (const roomCode in studentMembers) {
+      if (studentMembers[roomCode].delete(socket.id)) {
+        io.to(roomCode).emit(
+          "room-member-count",
+          studentMembers[roomCode]?.size || 0
+        );
+      }
     }
   });
 }
