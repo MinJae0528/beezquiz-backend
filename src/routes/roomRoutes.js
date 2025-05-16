@@ -1,4 +1,3 @@
-// ✅ src/routes/roomRoutes.js
 import express from "express";
 import pool from "../config/db.js";
 import { randomBytes } from "crypto";
@@ -12,10 +11,15 @@ const nicknamesInRoom = new Map();       // { roomCode: Set(nicknames) }
 const roomTimestamps = new Map();        // { roomCode: 생성된 시간(timestamp) }
 const ROOM_EXPIRE_TIME = 10 * 60 * 1000; // 10분
 
-// ✅ 퀴즈 요약 조회 API 추가
+// ✅ 테스트용 기본 GET 라우트 추가
+router.get("/", (req, res) => {
+  res.json({ message: "✅ /rooms 라우터 정상 작동 중!" });
+});
+
+// ✅ 퀴즈 요약 조회 API
 router.get("/:roomCode/summary", getRoomSummary);
 
-// [POST] /room/create - 방 생성
+// [POST] /rooms/create - 방 생성
 router.post("/create", async (req, res) => {
   try {
     const { host } = req.body;
@@ -40,7 +44,7 @@ router.post("/create", async (req, res) => {
   }
 });
 
-// [POST] /room/join - 방 참가
+// [POST] /rooms/join - 방 참가
 router.post("/join", async (req, res) => {
   try {
     const { roomCode, nickname, role } = req.body;
