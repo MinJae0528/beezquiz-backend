@@ -1,39 +1,37 @@
 // src/routes/roomRoutes.js
 import express from "express";
 import Room from "../models/Room.js";
-import { randomBytes } from "crypto";
 
 const router = express.Router();
 
-// 방 상태 관리 메모리 (만료 시간 등)
 const participantCounts = {};
 const roomTimestamps = new Map();
-const ROOM_EXPIRE_TIME = 10 * 60 * 1000; // 10분
+const ROOM_EXPIRE_TIME = 10 * 60 * 1000;
 
-// ✅ 테스트용 라우터
 router.get("/", (req, res) => {
   res.json({ message: "✅ /rooms 라우터 정상 작동 중!" });
 });
 
-// ✅ 방 생성
 router.post("/create", async (req, res) => {
   try {
-    const { host } = req.body;
-    if (!host) return res.status(400).json({ message: "host 값이 없습니다." });
+    const { questions } = req.body;
+    if (!questions || !Array.isArray(questions)) {
+      return res.status(400).json({ message: "questions 배열이 필요합니다." });
+    }
 
-    const roomCode = randomBytes(3).toString("hex").toUpperCase();
+    const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
     const createdAt = new Date();
 
     const newRoom = new Room({
-      host,
+      host: "default", // host 없이 자동 설정
       roomCode,
       createdAt,
-      participants: {},
-      nicknames: [],
+      questions,
+      participants: new Map(),
+      nicknames: []
     });
 
     await newRoom.save();
-
     roomTimestamps.set(roomCode, Date.now());
     participantCounts[roomCode] = 0;
 
@@ -44,7 +42,6 @@ router.post("/create", async (req, res) => {
   }
 });
 
-// ✅ 방 참가 API
 router.post("/join", async (req, res) => {
   try {
     const { roomCode, nickname, role } = req.body;
@@ -55,7 +52,6 @@ router.post("/join", async (req, res) => {
     const room = await Room.findOne({ roomCode });
     if (!room) return res.status(404).json({ message: "해당 방이 존재하지 않습니다." });
 
-    // 만료 검사
     const ts = roomTimestamps.get(roomCode);
     if (!ts || Date.now() - ts > ROOM_EXPIRE_TIME) {
       await Room.deleteOne({ roomCode });
@@ -70,10 +66,9 @@ router.post("/join", async (req, res) => {
 
     room.nicknames.push(nickname);
     if (role === "student") {
-      room.participants[nickname] = 0;
+      room.participants.set(nickname, 0);
       participantCounts[roomCode] = (participantCounts[roomCode] || 0) + 1;
     }
-
     await room.save();
 
     return res.status(200).json({
@@ -86,23 +81,19 @@ router.post("/join", async (req, res) => {
   }
 });
 
-// ✅ 요약 API
 router.get("/:roomCode/summary", async (req, res) => {
   try {
     const room = await Room.findOne({ roomCode: req.params.roomCode });
     if (!room) return res.status(404).json({ message: "방이 존재하지 않습니다." });
 
-    const scores = Object.values(room.participants);
+    const scores = Array.from(room.participants.values());
     const total = scores.length;
     const totalScore = scores.reduce((a, b) => a + b, 0);
     const average = total > 0 ? totalScore / total : 0;
 
     return res.json({
       averageScore: average,
-      participants: Object.entries(room.participants).map(([name, score]) => ({
-        nickname: name,
-        score,
-      })),
+      participants: Array.from(room.participants.entries()).map(([nickname, score]) => ({ nickname, score }))
     });
   } catch (err) {
     console.error("요약 오류:", err);
@@ -110,7 +101,6 @@ router.get("/:roomCode/summary", async (req, res) => {
   }
 });
 
-// ✅ 방 만료 정리
 setInterval(async () => {
   const now = Date.now();
   for (const [code, ts] of roomTimestamps.entries()) {
