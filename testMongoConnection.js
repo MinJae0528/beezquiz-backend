@@ -1,25 +1,19 @@
-import { MongoClient, ServerApiVersion } from 'mongodb';
+import mongoose from "mongoose";
+import dotenv from "dotenv";
 
-const uri = "mongodb+srv://dbUser:yourEncodedPassword@beezquizdb.9rrqndr.mongodb.net/?retryWrites=true&w=majority&appName=beezquizdb";
+dotenv.config();
 
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
-});
+console.log("🧪 현재 MONGO_URI:", process.env.MONGO_URI);
 
-async function run() {
-  try {
-    await client.connect();
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } catch (e) {
-    console.error("MongoDB 연결 실패:", e);
-  } finally {
-    await client.close();
-  }
-}
-
-run();
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+  .then(() => {
+    console.log("✅ 연결 성공");
+    process.exit(0);
+  })
+  .catch((err) => {
+    console.error("❌ 연결 실패:", err);
+    process.exit(1);
+  });
