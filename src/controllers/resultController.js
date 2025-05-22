@@ -1,5 +1,6 @@
 import db from "../config/db.js";
 
+// 결과 저장
 export const saveResult = async (req, res) => {
   const { roomCode, nickname, answers, role } = req.body;
 
@@ -40,6 +41,7 @@ export const saveResult = async (req, res) => {
   }
 };
 
+// 결과 요약 조회
 export const getRoomSummary = async (req, res) => {
   const { roomCode } = req.params;
 
@@ -60,11 +62,18 @@ export const getRoomSummary = async (req, res) => {
       [roomId, host]
     );
 
+    const [questionCountRows] = await db.query(
+      `SELECT COUNT(*) AS count FROM questions WHERE room_id = ?`,
+      [roomId]
+    );
+    const totalQuestions = questionCountRows[0].count;
+
     const totalScore = resultRows.reduce((sum, row) => sum + row.score, 0);
     const average = resultRows.length > 0 ? totalScore / resultRows.length : 0;
 
     return res.status(200).json({
       averageScore: average,
+      totalQuestions,
       participants: resultRows,
     });
   } catch (err) {
