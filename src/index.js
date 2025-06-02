@@ -24,7 +24,7 @@ const startServer = async () => {
     console.log("✅ MongoDB 연결 성공");
 
     // CORS 설정
-    app.use(cors({ origin: "http://localhost:3000/", credentials: true }));
+    app.use(cors({ origin: "http://localhost:3000", credentials: true }));
     app.options("*", cors());
     app.use(express.json());
 
