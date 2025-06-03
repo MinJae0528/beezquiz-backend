@@ -1,10 +1,12 @@
-import mongoose from "mongoose";
+// ✅ models/Room.js
+import mongoose from "mongoose"
 
-// 개별 질문 스키마 정의
 const questionSchema = new mongoose.Schema({
   question_text: { type: String, required: true },
   correct_answer: { type: String, required: true },
-});
+  type: { type: String, default: "subjective" },
+  options: { type: [String], default: undefined }, // ✅ null 대신 undefined
+})
 
 const RoomSchema = new mongoose.Schema({
   host: { type: String, default: "default" },
@@ -17,9 +19,9 @@ const RoomSchema = new mongoose.Schema({
     default: {},
   },
   questions: {
-    type: [questionSchema], // ✅ 문제 배열 추가
+    type: [questionSchema],
     default: [],
   },
-});
+})
 
-export default mongoose.model("Room", RoomSchema);
+export default mongoose.model("Room", RoomSchema)

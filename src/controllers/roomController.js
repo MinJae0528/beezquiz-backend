@@ -19,9 +19,10 @@ export async function createRoom(req, res) {
       roomCode,
       host: teacherName,
       questions: questions?.map((q) => ({
-        questionText: q.text,
-        options: q.options,
-        correctAnswer: q.correctAnswer,
+        question_text: q.text, // 일관성 있게
+        options: q.options || null,
+        correct_answer: q.correctAnswer,
+        type: q.type || 'subjective' // 추가!
       })) || [],
     });
 

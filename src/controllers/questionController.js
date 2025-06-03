@@ -1,29 +1,31 @@
-// controllers/questionController.js
-import Room from "../models/Room.js"; // Room 모델 import
+import Room from "../models/Room.js";
 
-// ✅ 문제 저장
+// ✅ 문제 저장 (객관식/서술형 모두 지원)
 export const saveQuestions = async (req, res) => {
   const { roomCode } = req.params;
   const { questions } = req.body;
 
-  // 유효성 검사
   if (!questions || !Array.isArray(questions)) {
     return res.status(400).json({ message: "questions 배열이 필요합니다." });
   }
 
   try {
-    // 방 존재 여부 확인
     const room = await Room.findOne({ roomCode });
     if (!room) {
       return res.status(404).json({ message: "해당 방이 없습니다." });
     }
 
-    // 질문 저장 (question_text와 correct_answer만)
+    // 기존 문제 삭제(중복 방지)
+    room.questions = [];
+
+    // 질문 저장 (type, options 포함)
     questions.forEach((q) => {
       if (q.text && q.correctAnswer) {
         room.questions.push({
           question_text: q.text,
           correct_answer: q.correctAnswer.trim(),
+          type: q.type, // 'objective' or 'subjective'
+          options: q.options || null // 객관식일 때만 배열, 서술형은 null
         });
       }
     });
@@ -36,7 +38,7 @@ export const saveQuestions = async (req, res) => {
   }
 };
 
-// ✅ 문제 조회
+// ✅ 문제 조회 (객관식/서술형 모두 지원)
 export const getQuestionsByRoom = async (req, res) => {
   const { roomCode } = req.params;
 
@@ -47,10 +49,12 @@ export const getQuestionsByRoom = async (req, res) => {
       return res.status(404).json({ message: "해당 방이 존재하지 않습니다." });
     }
 
-    // questions 배열 반환
+    // questions 배열 반환 (type, options 포함)
     const questions = room.questions.map((q) => ({
-      question: q.question_text,
-      answer: q.correct_answer,
+      text: q.question_text,
+      correctAnswer: q.correct_answer,
+      type: q.type || 'subjective',
+      options: q.options || null
     }));
 
     return res.status(200).json({ questions });
