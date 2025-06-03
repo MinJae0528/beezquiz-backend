@@ -37,6 +37,8 @@ export default function handleRoomSocket(io, socket) {
   });
 
   socket.on("submit-answer", ({ roomCode, questionIndex }) => {
+    console.log("🔥 제출 이벤트 수신:", roomCode, questionIndex);
+    
     if (!submittedAnswers[roomCode]) {
       submittedAnswers[roomCode] = {};
     }
