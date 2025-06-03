@@ -48,6 +48,10 @@ const startServer = async () => {
     //   GET    /result/summary/:roomCode → 퀴즈 결과 요약 조회
     app.use("/result", resultRoutes);
 
+     // ✅ 없는 경로 처리 (꼭 맨 아래에)
+    app.use((req, res) => {
+      res.status(404).json({ error: "존재하지 않는 경로입니다." });
+    });
     // ─────────────────────────
 
     initializeSocket(server); // 소켓 사용 안 하면 주석 처리 가능
