@@ -1,11 +1,12 @@
 const studentMembers = {}; // { roomCode: Set<socket.id> }
 const submittedAnswers = {}; // { roomCode: { questionIndex: Set<socket.id> } }
+const nicknameMap = new Map(); // socket.id -> nickname
 
 export default function handleRoomSocket(io, socket) {
   socket.on("join-room", (payload) => {
-    const { roomCode, role } =
+    const { roomCode, role, nickname } =
       typeof payload === "string"
-        ? { roomCode: payload, role: "student" }
+        ? { roomCode: payload, role: "student", nickname: "익명" }
         : payload;
 
     socket.join(roomCode);
@@ -13,6 +14,7 @@ export default function handleRoomSocket(io, socket) {
     if (role === "student") {
       studentMembers[roomCode] = studentMembers[roomCode] || new Set();
       studentMembers[roomCode].add(socket.id);
+      nicknameMap.set(socket.id, nickname); // ✅ nickname 저장
     }
 
     io.to(roomCode).emit(
@@ -26,19 +28,18 @@ export default function handleRoomSocket(io, socket) {
   });
 
   socket.on("next-question", ({ roomCode, nextIndex }) => {
-    // 문제 인덱스에 대한 제출자 집합 초기화
     if (!submittedAnswers[roomCode]) {
       submittedAnswers[roomCode] = {};
     }
     submittedAnswers[roomCode][nextIndex] = new Set();
 
     io.to(roomCode).emit("next-question", nextIndex);
-    io.to(roomCode).emit("submit-count", 0); // 교사 화면 제출 인원 초기화
+    io.to(roomCode).emit("submit-count", 0); // 초기화
   });
 
   socket.on("submit-answer", ({ roomCode, questionIndex }) => {
     console.log("🔥 제출 이벤트 수신:", roomCode, questionIndex);
-    
+
     if (!submittedAnswers[roomCode]) {
       submittedAnswers[roomCode] = {};
     }
@@ -47,9 +48,14 @@ export default function handleRoomSocket(io, socket) {
     }
 
     const currentSet = submittedAnswers[roomCode][questionIndex];
+
     if (!currentSet.has(socket.id)) {
       currentSet.add(socket.id);
       io.to(roomCode).emit("submit-count", currentSet.size);
+
+      // ✅ 제출한 사람 nickname도 로깅
+      const nickname = nicknameMap.get(socket.id) || "익명";
+      console.log(`✅ ${nickname} 학생이 ${questionIndex}번 문제 제출`);
     }
   });
 
@@ -58,7 +64,6 @@ export default function handleRoomSocket(io, socket) {
   });
 
   socket.on("disconnect", () => {
-    // 참가자 제거
     for (const roomCode in studentMembers) {
       if (studentMembers[roomCode].delete(socket.id)) {
         io.to(roomCode).emit(
@@ -68,7 +73,8 @@ export default function handleRoomSocket(io, socket) {
       }
     }
 
-    // 제출자 목록에서도 제거
+    nicknameMap.delete(socket.id); // ✅ nickname 제거
+
     for (const roomCode in submittedAnswers) {
       for (const qIndex in submittedAnswers[roomCode]) {
         submittedAnswers[roomCode][qIndex].delete(socket.id);
