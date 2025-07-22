@@ -1,9 +1,9 @@
-// ✅ models/Room.js
+// ✅ models/Room.js (수정된 버전)
 import mongoose from "mongoose";
 
 const questionSchema = new mongoose.Schema({
-  question_text: { type: String, required: true },
-  correct_answer: { type: String, required: true },
+  text: { type: String, required: true }, 
+  correctAnswer: { type: String, required: true }, 
   type: { type: String, default: "subjective" },
   options: { type: [String], default: undefined },
 });
