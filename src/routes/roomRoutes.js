@@ -1,3 +1,4 @@
+// ✅ routes/roomRoutes.js
 import express from "express";
 import Room from "../models/Room.js";
 import { nanoid } from "nanoid";
@@ -16,12 +17,10 @@ router.post("/create", async (req, res) => {
     const createdAt = new Date();
 
     const formattedQuestions = questions.map((q) => ({
-      question_text: q.text || q.question || "",
-      correct_answer: q.correctAnswer || q.answer || "",
+      question_text: q.text || "",
+      correct_answer: q.correctAnswer || "",
       type: q.type || "subjective",
-      options: q.type === "objective"
-        ? (q.options || []).filter((opt) => opt.trim() !== "")
-        : [],
+      options: q.type === "objective" ? (q.options || []).filter(opt => opt.trim()) : undefined
     }));
 
     const newRoom = new Room({
@@ -30,15 +29,14 @@ router.post("/create", async (req, res) => {
       createdAt,
       questions: formattedQuestions,
       participants: new Map(),
-      nicknames: []
+      nicknames: [],
     });
 
     await newRoom.save();
     return res.status(201).json({ roomCode });
-
   } catch (err) {
-    console.error("🔥 Mongo 방 생성 오류:", err.stack || err.message || err);
-    return res.status(500).json({ message: "방 생성 실패", detail: err.message });
+    console.error("🔥 방 생성 오류:", err);
+    return res.status(500).json({ message: "방 생성 실패" });
   }
 });
 

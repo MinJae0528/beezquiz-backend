@@ -1,12 +1,12 @@
 // ✅ models/Room.js
-import mongoose from "mongoose"
+import mongoose from "mongoose";
 
 const questionSchema = new mongoose.Schema({
   question_text: { type: String, required: true },
   correct_answer: { type: String, required: true },
   type: { type: String, default: "subjective" },
-  options: { type: [String], default: undefined }, // ✅ null 대신 undefined
-})
+  options: { type: [String], default: undefined },
+});
 
 const RoomSchema = new mongoose.Schema({
   host: { type: String, default: "default" },
@@ -22,6 +22,6 @@ const RoomSchema = new mongoose.Schema({
     type: [questionSchema],
     default: [],
   },
-})
+});
 
-export default mongoose.model("Room", RoomSchema)
+export default mongoose.model("Room", RoomSchema);
