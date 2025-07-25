@@ -26,7 +26,7 @@ export const saveQuestions = async (req, res) => {
         room.questions.push({
           question_text: q.text,
           correct_answer: (q.correctAnswer || '').trim(), // 빈 문자열도 허용
-          type: q.type || 'subjective', // 기본값 방어적 처리
+          type: q.type,
           options: Array.isArray(q.options) ? q.options : null // 객관식일 때만 배열
         });
       }
