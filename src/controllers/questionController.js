@@ -1,3 +1,5 @@
+// src/controllers/questionController.js
+
 import Room from "../models/Room.js";
 
 // ✅ 문제 저장 (객관식/서술형 모두 지원)
@@ -20,12 +22,12 @@ export const saveQuestions = async (req, res) => {
 
     // 질문 저장 (type, options 포함)
     questions.forEach((q) => {
-      if (q.text && q.correctAnswer) {
+      if (q.text) {
         room.questions.push({
           question_text: q.text,
-          correct_answer: q.correctAnswer.trim(),
-          type: q.type, // 'objective' or 'subjective'
-          options: q.options || null // 객관식일 때만 배열, 서술형은 null
+          correct_answer: (q.correctAnswer || '').trim(), // 빈 문자열도 허용
+          type: q.type || 'subjective', // 기본값 방어적 처리
+          options: Array.isArray(q.options) ? q.options : null // 객관식일 때만 배열
         });
       }
     });
@@ -54,7 +56,7 @@ export const getQuestionsByRoom = async (req, res) => {
       text: q.question_text,
       correctAnswer: q.correct_answer,
       type: q.type || 'subjective',
-      options: q.options || null
+      options: Array.isArray(q.options) ? q.options : []
     }));
 
     return res.status(200).json({ questions });
