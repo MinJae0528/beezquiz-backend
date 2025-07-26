@@ -20,12 +20,12 @@ export const saveResult = async (req, res) => {
 
     const correctAnswers = room.questions.map((q) => q.correct_answer.trim());
 
-    // ✅ 알파벳(A~D) → 숫자 문자열(0~3)로 변환
+    // ✅ 알파벳 A~D를 숫자 문자열 0~3으로 변환
     const convertAlphabetToIndex = (value) => {
       if (typeof value === 'string' && /^[A-D]$/.test(value.trim())) {
-        return (value.trim().charCodeAt(0) - 65).toString(); // 'A' → '0'
+        return (value.trim().charCodeAt(0) - 65).toString(); // A → 0
       }
-      return value?.trim(); // 그 외는 그대로
+      return value?.trim();
     };
 
     const score = answers.reduce((acc, ans, idx) => {
@@ -41,5 +41,36 @@ export const saveResult = async (req, res) => {
   } catch (err) {
     console.error("❌ saveResult 에러:", err);
     return res.status(500).json({ error: "결과 저장 중 오류" });
+  }
+};
+
+// 결과 요약 조회
+export const getRoomSummary = async (req, res) => {
+  const { roomCode } = req.params;
+
+  try {
+    const room = await Room.findOne({ roomCode });
+    if (!room) {
+      return res.status(404).json({ message: "해당 방이 존재하지 않습니다." });
+    }
+
+    const participants = Array.from(room.participants.entries()).map(([nickname, score]) => ({
+      nickname,
+      score
+    }));
+
+    const scores = participants.map(p => p.score);
+    const total = scores.length;
+    const totalScore = scores.reduce((a, b) => a + b, 0);
+    const average = total > 0 ? totalScore / total : 0;
+
+    return res.status(200).json({
+      averageScore: average,
+      totalQuestions: room.questions.length,
+      participants
+    });
+  } catch (err) {
+    console.error("❌ getRoomSummary 에러:", err);
+    return res.status(500).json({ error: "결과 요약 조회 실패" });
   }
 };
