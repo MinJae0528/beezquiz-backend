@@ -5,6 +5,7 @@ import { nanoid } from "nanoid";
 
 const router = express.Router();
 
+// 방 생성 API
 router.post("/create", async (req, res) => {
   try {
     const { questions } = req.body;
@@ -16,12 +17,17 @@ router.post("/create", async (req, res) => {
     const roomCode = nanoid(6).toUpperCase();
     const createdAt = new Date();
 
-    const formattedQuestions = questions.map((q) => ({
-      question_text: q.text || "",
-      correct_answer: q.correctAnswer || "",
-      type: q.type || "subjective",
-      options: q.type === "objective" ? (q.options || []).filter(opt => opt.trim()) : undefined
-    }));
+    // 객관식 정답은 반드시 "1", "2", "3", "4" 중 하나여야 하며, options는 4개 고정
+    const formattedQuestions = questions.map((q) => {
+      const isObjective = q.type === "objective";
+
+      return {
+        question_text: q.text || "",
+        correct_answer: isObjective ? String(q.correctAnswer) : q.correctAnswer || "",
+        type: isObjective ? "objective" : "subjective",
+        options: isObjective ? (q.options || ["", "", "", ""]).map((opt) => opt.trim()) : undefined,
+      };
+    });
 
     const newRoom = new Room({
       host: "default",
@@ -41,4 +47,3 @@ router.post("/create", async (req, res) => {
 });
 
 export default router;
-  

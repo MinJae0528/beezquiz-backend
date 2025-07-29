@@ -1,3 +1,4 @@
+// ✅ socket/roomSocket.js
 const studentMembers = {}; // { roomCode: Set<socket.id> }
 const submittedAnswers = {}; // { roomCode: { questionIndex: Set<socket.id> } }
 
@@ -26,19 +27,16 @@ export default function handleRoomSocket(io, socket) {
   });
 
   socket.on("next-question", ({ roomCode, nextIndex }) => {
-    // 문제 인덱스에 대한 제출자 집합 초기화
     if (!submittedAnswers[roomCode]) {
       submittedAnswers[roomCode] = {};
     }
     submittedAnswers[roomCode][nextIndex] = new Set();
 
     io.to(roomCode).emit("next-question", nextIndex);
-    io.to(roomCode).emit("submit-count", 0); // 교사 화면 제출 인원 초기화
+    io.to(roomCode).emit("submit-count", 0);
   });
 
   socket.on("submit-answer", ({ roomCode, questionIndex }) => {
-    console.log("🔥 제출 이벤트 수신:", roomCode, questionIndex);
-    
     if (!submittedAnswers[roomCode]) {
       submittedAnswers[roomCode] = {};
     }
@@ -58,7 +56,6 @@ export default function handleRoomSocket(io, socket) {
   });
 
   socket.on("disconnect", () => {
-    // 참가자 제거
     for (const roomCode in studentMembers) {
       if (studentMembers[roomCode].delete(socket.id)) {
         io.to(roomCode).emit(
@@ -68,7 +65,6 @@ export default function handleRoomSocket(io, socket) {
       }
     }
 
-    // 제출자 목록에서도 제거
     for (const roomCode in submittedAnswers) {
       for (const qIndex in submittedAnswers[roomCode]) {
         submittedAnswers[roomCode][qIndex].delete(socket.id);

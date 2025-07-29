@@ -1,12 +1,13 @@
+// ✅ socket/index.js
 import { Server } from "socket.io";
 import registerRoomSocket from "./roomSocket.js";
 
 export default function initializeSocket(server) {
   const io = new Server(server, {
     cors: {
-      origin: "http://localhost:3000",  // 프론트 주소로 변경
+      origin: "http://localhost:3000",  // 프론트 주소로 수정 가능
       methods: ["GET", "POST"],
-      credentials: true,                // 필요하면 true
+      credentials: true,
     },
   });
 

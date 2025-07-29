@@ -1,23 +1,33 @@
-// controllers/roomController.js
+// ✅ controllers/roomController.js
 import Room from "../models/Room.js";
 import { nanoid } from "nanoid";
 
-// 방 생성 API
+// ✅ 방 생성 API
 export async function createRoom(req, res) {
   try {
-    const { teacherName, questions } = req.body;
+    const { questions } = req.body;
+
+    if (!questions || !Array.isArray(questions) || questions.length === 0) {
+      return res.status(400).json({ message: "questions 배열이 필요합니다." });
+    }
 
     const roomCode = nanoid(6).toUpperCase();
+    const createdAt = new Date();
+
+    const formattedQuestions = questions.map((q) => ({
+      text: q.text || "",
+      correctAnswer: q.correctAnswer || "",
+      type: q.type || "subjective",
+      options: q.type === "objective" ? (q.options || []).filter(opt => opt.trim()) : undefined
+    }));
 
     const newRoom = new Room({
+      host: "비공개",
       roomCode,
-      host: teacherName || "비공개", // teacherName 없어도 OK
-      questions: questions?.map((q) => ({
-        text: q.text,
-        correctAnswer: q.correctAnswer,
-        type: q.type || "subjective",
-        options: q.options?.length ? q.options : undefined,
-      })) || [],
+      createdAt,
+      questions: formattedQuestions,
+      participants: new Map(),
+      nicknames: [],
     });
 
     await newRoom.save();

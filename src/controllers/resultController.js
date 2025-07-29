@@ -1,6 +1,7 @@
+// ✅ controllers/resultController.js
 import Room from "../models/Room.js";
 
-// 결과 저장
+// ✅ 결과 저장
 export const saveResult = async (req, res) => {
   const { roomCode, nickname, answers, role } = req.body;
 
@@ -18,18 +19,10 @@ export const saveResult = async (req, res) => {
       return res.status(404).json({ error: "해당 방이 없습니다." });
     }
 
-    const correctAnswers = room.questions.map((q) => q.correct_answer.trim());
-
-    // ✅ 알파벳 A~D를 숫자 문자열 0~3으로 변환
-    const convertAlphabetToIndex = (value) => {
-      if (typeof value === 'string' && /^[A-D]$/.test(value.trim())) {
-        return (value.trim().charCodeAt(0) - 65).toString(); // A → 0
-      }
-      return value?.trim();
-    };
+    const correctAnswers = room.questions.map((q) => q.correctAnswer.trim());
 
     const score = answers.reduce((acc, ans, idx) => {
-      const submitted = convertAlphabetToIndex(ans ?? "");
+      const submitted = (ans ?? "").trim();
       const correct = correctAnswers[idx];
       return acc + (submitted === correct ? 1 : 0);
     }, 0);
@@ -44,7 +37,7 @@ export const saveResult = async (req, res) => {
   }
 };
 
-// 결과 요약 조회
+// ✅ 결과 요약 조회
 export const getRoomSummary = async (req, res) => {
   const { roomCode } = req.params;
 

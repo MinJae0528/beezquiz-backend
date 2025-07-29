@@ -1,12 +1,16 @@
-  import express from "express";
-  import {
-    saveResult,
-    getRoomSummary,
-  } from "../controllers/resultController.js";
+// ✅ routes/resultRoutes.js
+import express from "express";
+import {
+  saveResult,
+  getRoomSummary,
+} from "../controllers/resultController.js";
 
-  const router = express.Router();
+const router = express.Router();
 
-  router.post("/", saveResult);
-  router.get("/summary/:roomCode", getRoomSummary);
+// ✅ 퀴즈 결과 저장
+router.post("/", saveResult);
 
-  export default router;
+// ✅ 결과 요약 조회
+router.get("/summary/:roomCode", getRoomSummary);
+
+export default router;
