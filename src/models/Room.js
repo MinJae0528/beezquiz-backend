@@ -1,4 +1,4 @@
-// ✅ models/Room.js (수정된 버전)
+// models/Room.js
 import mongoose from "mongoose";
 
 const questionSchema = new mongoose.Schema({
@@ -9,7 +9,7 @@ const questionSchema = new mongoose.Schema({
 });
 
 const RoomSchema = new mongoose.Schema({
-  host: { type: String, default: "default" },
+  host: { type: String, default: "비공개" },
   roomCode: { type: String, required: true, unique: true },
   createdAt: { type: Date, default: Date.now },
   nicknames: { type: [String], default: [] },

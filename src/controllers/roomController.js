@@ -1,28 +1,22 @@
+// controllers/roomController.js
 import Room from "../models/Room.js";
 import { nanoid } from "nanoid";
 
-/**
- * 방 생성 API
- * [POST] /room/create
- */
+// 방 생성 API
 export async function createRoom(req, res) {
   try {
     const { teacherName, questions } = req.body;
-
-    if (!teacherName) {
-      return res.status(400).json({ error: "teacherName is required" });
-    }
 
     const roomCode = nanoid(6).toUpperCase();
 
     const newRoom = new Room({
       roomCode,
-      host: teacherName,
+      host: teacherName || "비공개", // teacherName 없어도 OK
       questions: questions?.map((q) => ({
-        question_text: q.text, // 일관성 있게
-        options: q.options || null,
-        correct_answer: q.correctAnswer,
-        type: q.type || 'subjective' // 추가!
+        text: q.text,
+        correctAnswer: q.correctAnswer,
+        type: q.type || "subjective",
+        options: q.options?.length ? q.options : undefined,
       })) || [],
     });
 
