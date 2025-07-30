@@ -2,10 +2,10 @@
 import mongoose from "mongoose";
 
 const questionSchema = new mongoose.Schema({
-  text: { type: String, required: true },                     // 문제 내용
-  correctAnswer: { type: String, required: true },            // 정답 ("1", "2", "3", "4" 또는 서술형 답)
-  type: { type: String, default: "subjective" },              // 문제 타입: objective | subjective
-  options: { type: [String], default: undefined },            // 객관식 보기 (4개 고정)
+  text: { type: String, required: true },        // 문제 내용
+  correctAnswer: { type: String, required: true }, // 정답
+  type: { type: String, default: "subjective" }, // 문제 타입
+  options: { type: [String], default: undefined } // 객관식 보기
 });
 
 const RoomSchema = new mongoose.Schema({
