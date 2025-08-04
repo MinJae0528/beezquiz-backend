@@ -22,19 +22,25 @@ export const saveQuestions = async (req, res) => {
     // 질문 저장 (type, options 포함)
     questions.forEach((q) => {
       if (q.text) {
-        room.questions.push({
+        const newQ = {
           text: q.text,
-          correctAnswer: (q.correctAnswer || '').trim(), // "1", "2", "3", "4" 또는 서술형
+          correctAnswer: (q.correctAnswer || "").trim(), // 객관식: "1", "2", "3", "4" / 서술형: 문자열
           type: q.type || "subjective",
-          options: q.type === "objective" ? (q.options || []).map(opt => opt.trim()) : undefined,
-        });
+        };
+
+        // 객관식이면 options 필드 포함
+        if (q.type === "objective") {
+          newQ.options = (q.options || []).map(opt => opt.trim());
+        }
+
+        room.questions.push(newQ);
       }
     });
 
     await room.save();
     return res.status(200).json({ message: "문제 저장 성공" });
   } catch (err) {
-    console.error("saveQuestions 에러:", err);
+    console.error("❌ saveQuestions 에러:", err);
     return res.status(500).json({ message: "문제 저장 중 오류" });
   }
 };
@@ -54,13 +60,13 @@ export const getQuestionsByRoom = async (req, res) => {
     const questions = room.questions.map((q) => ({
       text: q.text,
       correctAnswer: q.correctAnswer,
-      type: q.type || 'subjective',
+      type: q.type || "subjective",
       options: Array.isArray(q.options) ? q.options : [],
     }));
 
     return res.status(200).json({ questions });
   } catch (err) {
-    console.error("getQuestionsByRoom 에러:", err);
+    console.error("❌ getQuestionsByRoom 에러:", err);
     return res.status(500).json({ message: "문제 불러오기 실패" });
   }
 };
