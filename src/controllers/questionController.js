@@ -30,7 +30,20 @@ export const saveQuestions = async (req, res) => {
 
         // 객관식이면 options 필드 포함
         if (q.type === "objective") {
-          newQ.options = (q.options || []).map(opt => opt.trim());
+          newQ.options = (q.options || []).map(opt => opt.trim()).filter(opt => opt.length > 0);
+          console.log("🔍 객관식 문제 저장:", {
+            text: newQ.text,
+            type: newQ.type,
+            options: newQ.options,
+            optionsLength: newQ.options.length
+          });
+        } else {
+          newQ.options = []; // 서술형은 빈 배열로 설정
+          console.log("🔍 서술형 문제 저장:", {
+            text: newQ.text,
+            type: newQ.type,
+            options: newQ.options
+          });
         }
 
         room.questions.push(newQ);
